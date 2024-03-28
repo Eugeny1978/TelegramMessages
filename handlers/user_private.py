@@ -1,6 +1,7 @@
 from aiogram import F, Router, types
 from aiogram.filters import CommandStart, Command, or_f
 from filtres.chat_types import ChatTypeFilter
+from keyboards import reply_buttons as rbs
 
 router_user_private = Router()
 router_user_private.message.filter(ChatTypeFilter(['private']))  # разделяю где будут работать роутер и его хендлеры
@@ -8,13 +9,20 @@ router_user_private.message.filter(ChatTypeFilter(['private']))  # раздел�
 
 @router_user_private.message(CommandStart())
 async def start_cmd(message: types.Message):
-    await message.answer('Привет, я виртуальный помошник!')
+    # await message.answer('Привет, я виртуальный помошник!', reply_markup=rbs.start_keyboard)
+    await message.answer('Привет, я виртуальный помошник!',
+                         reply_markup=rbs.start_kb3.as_markup(
+                             resize_keyboard=True,
+                             input_field_placeholder='Хотите сделать заказ?'
+                         ))
+
+
 
 # Несколько разнотипных условий повесил на один обработчик
 # @router_user_private.message(Command('menu'))
-@router_user_private.message(or_f(Command('menu'), F.text.lower().contains('меню')))
+@router_user_private.message(or_f(Command('menu'), F.text.lower().contains('меню'), F.text.lower().contains('menu')))
 async def trades_cmd(message: types.Message):
-    await message.answer('MENU:')
+    await message.answer('MENU:', reply_markup=rbs.delete_keyboard)
 
 # @router_user_private.message(Command('about'))
 @router_user_private.message(or_f(Command('about'), F.text.lower().contains('о вас'), F.text.lower().contains('о нас')))

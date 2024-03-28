@@ -8,5 +8,3 @@ class ChatTypeFilter(Filter):
 
     async def __call__(self, message: types.Message) -> bool:
         return message.chat.type in self.chat_types
-
-# commit

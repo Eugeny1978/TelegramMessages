@@ -18,3 +18,8 @@ async def cleaner_restricted_words(message: types.Message):
         await message.reply(f'{message.from_user.first_name}, - Ругаться в группе запрещено! Будьте корректны в общении с коллегами')
         await message.delete()
         # await message.chat.ban(message.from_user.id)
+    # # Узнать ID чата.
+    # chat_id = message.chat.id  # работает и для приватного(лс) чата и для общих чатов (групп)
+    # # print(chat_id)
+    # await message.answer('Следуйте Указаниям!') # chat_id=chat_id, text=
+

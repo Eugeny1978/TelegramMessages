@@ -10,8 +10,6 @@
 в настройках бота отключить возможность добавки бота в новые группы:
     Allow groups?
     переключатель на Turn groups on
-
-
 """
 import asyncio
 from aiogram import Bot, Dispatcher, types
@@ -20,7 +18,8 @@ from database import get_token
 from handlers.user_private import router_user_private
 from handlers.user_group import router_user_group
 
-# Ограничил виды обновлений которые будет бот отслеживать
+# Ограничил виды обновлений которые будет бот отслеживать | https://core.telegram.org/bots/api#getting-updates
+# 'channel_post', 'edited_channel_post', 'message_reaction', 'shipping_query', 'chosen_inline_result' и другие
 ALLOWED_UPDATES = ['message', 'edited message']
 
 # bot = Bot(token=get_token())
@@ -29,6 +28,13 @@ dp = Dispatcher()
 # dp.include_routers(router_user_private, router_user_group)
 dp.include_router(router_user_private)
 dp.include_router(router_user_group)
+
+
+# chat_id = '-4102589186'
+# async def send_message(message: types.Message):
+#     await bot.send_message(chat_id=chat_id, text=message)
+
+
 
 
 
