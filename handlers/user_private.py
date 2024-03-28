@@ -1,5 +1,7 @@
 from aiogram import F, Router, types
 from aiogram.filters import CommandStart, Command, or_f
+from aiogram.utils.formatting import as_list, as_section, as_marked_section, Bold
+
 from filtres.chat_types import ChatTypeFilter
 from keyboards import reply_buttons as rbs
 
@@ -10,13 +12,7 @@ router_user_private.message.filter(ChatTypeFilter(['private']))  # раздел�
 @router_user_private.message(CommandStart())
 async def start_cmd(message: types.Message):
     # await message.answer('Привет, я виртуальный помошник!', reply_markup=rbs.start_keyboard)
-    await message.answer('Привет, я виртуальный помошник!',
-                         reply_markup=rbs.start_kb3.as_markup(
-                             resize_keyboard=True,
-                             input_field_placeholder='Хотите сделать заказ?'
-                         ))
-
-
+    await message.answer('Привет, я виртуальный помошник!', reply_markup=rbs.start_keyboard_3)
 
 # Несколько разнотипных условий повесил на один обработчик
 # @router_user_private.message(Command('menu'))
@@ -25,19 +21,56 @@ async def trades_cmd(message: types.Message):
     await message.answer('MENU:', reply_markup=rbs.delete_keyboard)
 
 # @router_user_private.message(Command('about'))
-@router_user_private.message(or_f(Command('about'), F.text.lower().contains('о вас'), F.text.lower().contains('о нас')))
+@router_user_private.message(or_f(Command('about'), F.text.lower().contains('о нас'), F.text.lower().contains('about')))
 async def about_cmd(message: types.Message):
     await message.answer('About us')
 
 # @router_user_private.message(Command('payment'))
-@router_user_private.message(or_f(Command('payment'), F.text.lower().contains('плати')))
+@router_user_private.message(or_f(Command('payment'), F.text.lower().contains('плати'), F.text.lower().contains('payment')))
 async def payment_cmd(message: types.Message):
-    await message.answer('Payment variants')
+    answer = as_marked_section(
+        Bold('Payment variants (Варианты Оплаты):'),
+        'Онлайн в этом Боте',
+            'При получении Картой',
+            'При получении Наличными',
+            'В Пиццерии',
+        marker='* '
+    )
+    await message.answer(answer.as_html(), reply_markup=rbs.payment_keyboard)
 
 # @router_user_private.message(Command('shipping'))
-@router_user_private.message(or_f(Command('shipping'), F.text.lower().contains('достав')))
+@router_user_private.message(or_f(Command('shipping'), F.text.lower().contains('достав'), F.text.lower().contains('shipping')))
 async def shipping_cmd(message: types.Message):
-    await message.answer('Shipping variants')
+    is_yes = as_marked_section(
+        Bold('Варианты Доставки (Shipping variants):'),
+        'Курьером',
+        'Самовывоз',
+        'Поем у вас в пиццерии',
+        marker='> '
+    )
+    is_no = as_marked_section(
+        Bold('Невозможно:'),
+        'Почтой',
+        'Голубями',
+        marker='x '
+    )
+    div_line = '\n' + '-' * 60 + '\n'
+    answer = as_list(is_yes, is_no, sep=div_line)
+    await message.answer(answer.as_html())
+
+@router_user_private.message(or_f(Command('review'), F.text.lower().contains('отзыв'), F.text.lower().contains('review')))
+async def shipping_cmd(message: types.Message):
+    await message.answer('<b>Review</b>', reply_markup=rbs.review_keyboard)
+
+@router_user_private.message(F.contact)
+async def get_contact(message: types.Message):
+    await message.answer('Telephone Number GETs')
+    await message.answer(str(message.contact))
+
+@router_user_private.message(F.location)
+async def get_contact(message: types.Message):
+    await message.answer('Locatiom GETs')
+    await message.answer(str(message.location))
 
 # @router_user_private.message(F.text.lower() == 'варианты доставки')
 # async def magic_v1(message: types.Message):
