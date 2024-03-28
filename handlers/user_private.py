@@ -3,7 +3,7 @@ from aiogram.filters import CommandStart, Command, or_f
 from aiogram.utils.formatting import as_list, as_section, as_marked_section, Bold
 
 from filtres.chat_types import ChatTypeFilter
-from keyboards import reply_buttons as rbs
+from keyboards import reply_buttons_video5 as rbs
 
 router_user_private = Router()
 router_user_private.message.filter(ChatTypeFilter(['private']))  # разделяю где будут работать роутер и его хендлеры

@@ -1,65 +1,49 @@
-from aiogram.types import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton, KeyboardButtonPollType
-from aiogram.utils.keyboard import ReplyKeyboardBuilder # Более Гибко Подробное Создание Кнопок
+from aiogram.types import KeyboardButton
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
-# Удаление Текущих Клавиатур
-delete_keyboard = ReplyKeyboardRemove()
+def get_keyboard(
+        buttons: list[str],
+        placeholder: str = None,
+        request_contact: int = None,
+        request_location: int = None,
+        sizes: tuple[int] = (2,)):
+    """
+    Parameters request_contact and request_location must be as indexes of btns args for buttons you need.
+    Example:
+    get_keyboard(
+        buttons=["Меню", "О магазине", "Варианты оплаты", "Варианты доставки", "Отправить номер телефона"],
+        placeholder="Что вас интересует?",
+        request_contact=4,
+        sizes=(2, 2, 1)
+        )
+    """
+    def validate_args():
+        logs = []
+        if sum(sizes) != len(buttons):
+            logs.append('| sizes - Компоновка кнопок не соотвествует их количеству')
+        if request_contact >= len(buttons):
+           logs.append('| request_contact - Индекс Контактной Кнопки за границей списка Кнопок.')
+        if request_location >= len(buttons):
+            logs.append('| request_location - Индекс Локационной Кнопки за границей списка Кнопок.')
+        if request_contact == request_location:
+            logs.append('| request_contact == request_location - На одну кнопку нельзя одновременно задать запрос на Локацию и Контакт.')
+        if logs:
+            raise(' | '.join(logs))
 
-# 1й Способ Создания. Используя Класс ReplyKeyboardMarkup
-start_keyboard = ReplyKeyboardMarkup(
-    keyboard=
-    [
-        [ # 1й ряд кнопок
-        KeyboardButton(text='Menu'),
-        KeyboardButton(text='About Us')
-        ],
-        [ # 2й ряд кнопок
-        KeyboardButton(text='Payment'),
-        KeyboardButton(text='Shipping')
-        ]
-    ],
-    resize_keyboard=True,
-    input_field_placeholder='Хотите сделать заказ?'
-)
-
-# 1й Способ Создания. Используя Класс ReplyKeyboardBuilder
-start_kb2 = ReplyKeyboardBuilder()
-start_kb2.add(KeyboardButton(text='Menu'),
-    KeyboardButton(text='About Us'),
-    KeyboardButton(text='Payment'),
-    KeyboardButton(text='Shipping')
-)
-start_kb2.adjust(2, 2)
-start_keyboard_2 = start_kb2.as_markup(resize_keyboard=True, input_field_placeholder='Хотите сделать заказ?')
-
-# Возможность Присоединять и добавлять новые кнопки
-start_kb3 = ReplyKeyboardBuilder()
-start_kb3.attach(start_kb2)
-# start_kb3.add(KeyboardButton(text='Send Review'))
-# start_kb3.adjust(2, 2, 1)
-start_kb3.row(KeyboardButton(text='Send Review'))
-start_keyboard_3 = start_kb3.as_markup(resize_keyboard=True, input_field_placeholder='Хотите сделать заказ?')
-
-
-payment_kb = ReplyKeyboardBuilder()
-for i in range(1, 16):
-    payment_kb.add(KeyboardButton(text=str(i)))
-payment_kb.adjust(5, 5, 5)
-payment_keyboard = payment_kb.as_markup(resize_keyboard=True, input_field_placeholder='Наберите Номер заказа:')
+    validate_args()
+    keyboard = ReplyKeyboardBuilder()
+    for button in buttons:
+        need_contact, need_location = False, False
+        if request_contact and request_contact == buttons.index(button):
+            need_contact = True
+        if request_location and request_location == buttons.index(button):
+            need_location = True
+        keyboard.add(KeyboardButton(text=button,
+                                    request_contact=need_contact,
+                                    request_location=need_location))
+        return keyboard.adjust(*sizes).as_markup(resize_keyboard=True, input_field_placeholder=placeholder)
 
 
-review_keyboard = ReplyKeyboardMarkup(
-    keyboard=
-    [
-        [ # 1й ряд кнопок
-        KeyboardButton(text='Create Poll', request_poll=KeyboardButtonPollType())
-        ],
-        [ # 2й ряд кнопок
-        KeyboardButton(text='Send Telephone Number %F0%9F%98%82', request_contact=True),
-        KeyboardButton(text='Send Location ', request_location=True)
-        ]
-    ],
-    resize_keyboard=True
-)
-
-
-
+if __name__ == '__main__':
+    buttons = ["Меню", "О магазине", "Варианты оплаты", "Варианты доставки", "Отправить номер телефона"]
+    print(buttons.index("О магазине"))
