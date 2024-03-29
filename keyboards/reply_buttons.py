@@ -25,10 +25,11 @@ def get_keyboard(
            logs.append('| request_contact - Индекс Контактной Кнопки за границей списка Кнопок.')
         if request_location > len(buttons):
             logs.append('| request_location - Индекс Локационной Кнопки за границей списка Кнопок.')
-        if request_contact == request_location:
+        if (request_contact == request_location) and request_contact:
             logs.append('| request_contact == request_location - В одной кнопке нельзя одновременно задать запрос на Локацию и Контакт.')
         if logs:
-            raise('\n'.join(logs))
+            print('\n'.join(logs))
+            raise
 
     if not sum(sizes): sizes = (len(buttons),)
     validate_args()

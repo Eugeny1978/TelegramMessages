@@ -17,8 +17,9 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from config import TOKEN, private_commands
 from database import get_token
-from handlers.user_private import router_user_private
-from handlers.user_group import router_user_group
+from handlers.admin_private import admin_router
+from handlers.user_private import user_private_router
+from handlers.user_group import user_group_router
 
 # Ограничил виды обновлений которые будет бот отслеживать | https://core.telegram.org/bots/api#getting-updates
 # 'channel_post', 'edited_channel_post', 'message_reaction', 'shipping_query', 'chosen_inline_result' и другие
@@ -27,18 +28,17 @@ ALLOWED_UPDATES = ['message', 'edited message']
 # bot = Bot(token=get_token())
 # форматирование сообщений с помощью HTML тегов, также мсожно вставлять в каждый хендлер, но проще прописать тут
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML)) # ParseMode.MARKDOWN_V2
+bot.my_admins_list = []
+
 dp = Dispatcher()
 # dp.include_routers(router_user_private, router_user_group)
-dp.include_router(router_user_private)
-dp.include_router(router_user_group)
-
+dp.include_router(user_private_router)
+dp.include_router(user_group_router)
+dp.include_router(admin_router)
 
 # chat_id = '-4102589186'
 # async def send_message(message: types.Message):
 #     await bot.send_message(chat_id=chat_id, text=message)
-
-
-
 
 
 async def main():
