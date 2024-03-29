@@ -4,6 +4,7 @@ from aiogram.utils.formatting import as_list, as_section, as_marked_section, Bol
 
 from filtres.chat_types import ChatTypeFilter
 from keyboards import reply_buttons_video5 as rbs
+from keyboards import reply_buttons as rb
 
 router_user_private = Router()
 router_user_private.message.filter(ChatTypeFilter(['private']))  # разделяю где будут работать роутер и его хендлеры
@@ -12,7 +13,13 @@ router_user_private.message.filter(ChatTypeFilter(['private']))  # раздел�
 @router_user_private.message(CommandStart())
 async def start_cmd(message: types.Message):
     # await message.answer('Привет, я виртуальный помошник!', reply_markup=rbs.start_keyboard)
-    await message.answer('Привет, я виртуальный помошник!', reply_markup=rbs.start_keyboard_3)
+    # await message.answer('Привет, я виртуальный помошник!', reply_markup=rbs.start_keyboard_3)
+    await message.answer('Привет, я виртуальный помошник!',
+             reply_markup=rb.get_keyboard(
+                 buttons=["Меню", "О магазине", "Варианты оплаты", "Варианты доставки"],
+                 placeholder="Что вас интересует?",
+                 request_contact=4,  # индекс кнопки. начинается с 1
+                 sizes=(2, 2) ) )
 
 # Несколько разнотипных условий повесил на один обработчик
 # @router_user_private.message(Command('menu'))
