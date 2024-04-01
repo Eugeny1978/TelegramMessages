@@ -15,12 +15,13 @@ import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from datetime import datetime
 from config import TOKEN, private_commands
-from my_test_database import get_token
 from handlers.admin_private import admin_router
 from handlers.user_private import user_private_router
 from handlers.user_group import user_group_router
 # from middlewares.db import CounterMiddleware
+from database.engine import create_db, drop_db # обязательно импорт после config.py чтобы загрузилась переменная с адресом Базы Данных
 
 # Ограничил виды обновлений которые будет бот отслеживать | https://core.telegram.org/bots/api#getting-updates
 # 'channel_post', 'edited_channel_post', 'message_reaction', 'shipping_query', 'chosen_inline_result' и другие
@@ -42,14 +43,31 @@ dp.include_router(admin_router)
 # async def send_message(message: types.Message):
 #     await bot.send_message(chat_id=chat_id, text=message)
 
+async def on_startup(bot, drop_case=False):
+    if drop_case:
+        await drop_db()
+    await create_db() # если таблицы уже существуют создания заново не произойдет
+
+async def on_shutdown(bot):
+    print(f'Бот отключился. | {datetime.now().strftime(date_format)}')
+
+date_format = '%Y-%m-%d %H:%M:%S'
 
 async def main():
-    print('Бот начал работу!')
+    print(f'Бот начал работу. | {datetime.now().strftime(date_format)}')
+
+    # Подключаем Базу Данных
+    # await create_db()
+    dp.startup.register(on_startup)
+    dp.shutdown.register(on_shutdown)
+
     # Игнорирует те обновления события, пока Бот был неактивен
     await bot.delete_webhook(drop_pending_updates=False)
+
     # Меню / для Лички
     # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats())
     await bot.set_my_commands(commands=private_commands, scope=types.BotCommandScopeAllPrivateChats())
+
     # Запускает Процесс (бесконечный цикл) проверки обновлений событий
     await dp.start_polling(bot, allowed_updates=ALLOWED_UPDATES)
 
