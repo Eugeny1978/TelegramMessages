@@ -20,6 +20,7 @@ from database import get_token
 from handlers.admin_private import admin_router
 from handlers.user_private import user_private_router
 from handlers.user_group import user_group_router
+# from middlewares.db import CounterMiddleware
 
 # Ограничил виды обновлений которые будет бот отслеживать | https://core.telegram.org/bots/api#getting-updates
 # 'channel_post', 'edited_channel_post', 'message_reaction', 'shipping_query', 'chosen_inline_result' и другие
@@ -31,6 +32,7 @@ bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML)) 
 bot.my_admins_list = []
 
 dp = Dispatcher()
+# dp.update.outer_middleware(CounterMiddleware()) # действует для всех типов событий для всех роутеров перед фильтрами
 # dp.include_routers(router_user_private, router_user_group)
 dp.include_router(user_private_router)
 dp.include_router(user_group_router)
