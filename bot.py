@@ -16,7 +16,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from config import TOKEN, private_commands
-from database import get_token
+from my_test_database import get_token
 from handlers.admin_private import admin_router
 from handlers.user_private import user_private_router
 from handlers.user_group import user_group_router
