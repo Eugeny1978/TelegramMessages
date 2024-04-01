@@ -43,7 +43,8 @@ dp.include_router(admin_router)
 # async def send_message(message: types.Message):
 #     await bot.send_message(chat_id=chat_id, text=message)
 
-async def on_startup(bot, drop_case=False):
+async def on_startup(bot):
+    drop_case = False
     if drop_case:
         await drop_db()
     await create_db() # если таблицы уже существуют создания заново не произойдет

@@ -2,3 +2,4 @@
 /.idea/
 /DATABASE.db
 /config.py
+/database/SQLITE_DB.db
