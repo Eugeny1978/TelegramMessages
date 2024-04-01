@@ -16,7 +16,6 @@ admin_keyboard = get_keyboard(
 
 remove_keyboard = get_keyboard(buttons=['Назад', 'Отмена'], placeholder="Выберите действие:")
 
-
 @admin_router.message(Command("admin"))
 async def add_product(message: types.Message):
     await message.answer("Что хотите сделать?", reply_markup=admin_keyboard)
@@ -32,7 +31,6 @@ async def change_product(message: types.Message):
 @admin_router.message(F.text.lower() == "Удалить Товар")
 async def delete_product(message: types.Message):
     await message.answer("Выберите товар(ы) для удаления")
-
 
 # Код ниже для машины состояний (FSM)
 
@@ -77,15 +75,16 @@ async def cancel_handler(message: types.Message, state: FSMContext) -> None:
             return
         prev_state = step_state
 
-
-
-
-
 @admin_router.message(F.text, AddProduct.name)
 async def add_name(message: types.Message, state: FSMContext):
     await state.update_data(name=message.text)
     await message.answer("Введите описание товара", reply_markup=remove_keyboard)
     await state.set_state(AddProduct.description)
+
+@admin_router.message(AddProduct.name) # Если Введен некорректный Тип данных
+async def add_name(message: types.Message, state: FSMContext):
+    await message.answer("Вы ввели недопустимый тип данных.\nВведите ТЕКСТ: Названия товара", reply_markup=remove_keyboard)
+    await message.delete()
 
 @admin_router.message(F.text, AddProduct.description)
 async def add_description(message: types.Message, state: FSMContext):
@@ -93,11 +92,21 @@ async def add_description(message: types.Message, state: FSMContext):
     await message.answer("Введите стоимость товара", reply_markup=remove_keyboard)
     await state.set_state(AddProduct.price)
 
+@admin_router.message(AddProduct.description)  # Если Введен некорректный Тип данных
+async def add_description(message: types.Message):
+    await message.answer("Вы ввели недопустимый тип данных.\nВведите ТЕКСТ: Описание товара", reply_markup=remove_keyboard)
+    await message.delete()
+
 @admin_router.message(F.text, AddProduct.price)
 async def add_price(message: types.Message, state: FSMContext):
     await state.update_data(price=message.text)
     await message.answer("Загрузите изображение товара", reply_markup=remove_keyboard)
     await state.set_state(AddProduct.image)
+
+@admin_router.message(AddProduct.price) # Если Введен некорректный Тип данных
+async def add_price(message: types.Message):
+    await message.answer("Вы ввели недопустимый тип данных.\nВведите ТЕКСТ: Стоимость товара", reply_markup=remove_keyboard)
+    await message.delete()
 
 @admin_router.message(F.photo, AddProduct.image)
 async def add_image(message: types.Message, state: FSMContext):
@@ -106,3 +115,8 @@ async def add_image(message: types.Message, state: FSMContext):
     data = await state.get_data()
     await message.answer(str(data))
     await state.clear() # await state.set_state(StateFilter(None))
+
+@admin_router.message(AddProduct.image) # Если Введен некорректный Тип данных
+async def add_image(message: types.Message):
+    await message.answer("Вы ввели недопустимый тип данных.\nОтправьте ФОТО: Изображение товара", reply_markup=remove_keyboard)
+    await message.delete()
