@@ -20,8 +20,10 @@ from config import TOKEN, private_commands
 from handlers.admin_private import admin_router
 from handlers.user_private import user_private_router
 from handlers.user_group import user_group_router
+from database.engine import create_db, drop_db, session_maker # обязательно импорт после config.py чтобы загрузилась переменная с адресом Базы Данных
 # from middlewares.db import CounterMiddleware
-from database.engine import create_db, drop_db # обязательно импорт после config.py чтобы загрузилась переменная с адресом Базы Данных
+from middlewares.db import DataBaseSession
+
 
 # Ограничил виды обновлений которые будет бот отслеживать | https://core.telegram.org/bots/api#getting-updates
 # 'channel_post', 'edited_channel_post', 'message_reaction', 'shipping_query', 'chosen_inline_result' и другие
@@ -61,6 +63,7 @@ async def main():
     # await create_db()
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
+    dp.update.middleware(DataBaseSession(session_pool=session_maker))
 
     # Игнорирует те обновления события, пока Бот был неактивен
     await bot.delete_webhook(drop_pending_updates=False)

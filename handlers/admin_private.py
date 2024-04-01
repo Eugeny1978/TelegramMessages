@@ -2,10 +2,13 @@ from aiogram import F, Router, types
 from aiogram.filters import Command, or_f, StateFilter
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from filters.chat_types import ChatTypeFilter, IsAdmin
 from keyboards.reply_buttons import get_keyboard
 from middlewares.db import CounterMiddleware
+from database.models import Product
+import database.orm_queries as queries
 
 admin_router = Router()
 admin_router.message.middleware(CounterMiddleware())
@@ -114,12 +117,18 @@ async def add_price(message: types.Message):
     await message.delete()
 
 @admin_router.message(F.photo, AddProduct.image)
-async def add_image(message: types.Message, state: FSMContext):
+async def add_image(message: types.Message, state: FSMContext, session: AsyncSession):
     await state.update_data(image=message.photo[-1].file_id)
-    await message.answer("Товар добавлен", reply_markup=admin_keyboard)
     data = await state.get_data()
-    await message.answer(str(data))
-    await state.clear() # await state.set_state(StateFilter(None))
+    try:
+        await queries.orm_add_product(session, data)
+        await message.answer("Товар добавлен", reply_markup=admin_keyboard)
+        # await message.answer(str(data))
+    except Exception as error:
+        await message.answer('Товар НЕ сохранен в Базе Данных | Ошибка Доступа.', reply_markup=admin_keyboard)
+    await state.clear()  # await state.set_state(StateFilter(None))
+
+
 
 @admin_router.message(AddProduct.image) # Если Введен некорректный Тип данных
 async def add_image(message: types.Message):
