@@ -53,7 +53,6 @@ async def delete_product(callback: types.CallbackQuery, session: AsyncSession):
     await callback.answer('Товар Удален', show_alert=True)
     await callback.message.answer('Товар Удален!')
 
-
 # # Код для машины состояний (FSM) -------------------------------------------------------------------------------------
 
 # Изменение Товара - Становимся в состояние ожидания ввода name
@@ -63,9 +62,9 @@ async def update_product(callback: types.CallbackQuery, session: AsyncSession, s
     # product_id = int(callback.data.replace('update_', ''))
     product_for_update = await queries.orm_get_product(session, product_id)
     AddProduct.product_for_update = product_for_update
-    print(AddProduct.product_for_update)
+    print(str(AddProduct.product_for_update))
     await callback.answer() # отправляю ответ - тк нажатие на кнопку ожидает ответа
-    await callback.message.answer('Введите Название Товара', reply_markup=ReplyKeyboardRemove())
+    await callback.message.answer('Введите Название Товара', reply_markup=remove_keyboard)
     await state.set_state(AddProduct.name)
 
  # Добавлние Товара - Становимся в состояние ожидания ввода name
@@ -107,7 +106,7 @@ async def cancel_handler(message: types.Message, state: FSMContext) -> None:
 # Ловим данные для состояние name и потом меняем состояние на description
 @admin_router.message(F.text, AddProduct.name) # or_f(F.text, F.text == '.')
 async def add_name(message: types.Message, state: FSMContext):
-    if message.text == '.':
+    if message.text == '-':
         await state.update_data(name=AddProduct.product_for_update.name)
     else:
         # Проверка на кол-во символов:
@@ -118,7 +117,7 @@ async def add_name(message: types.Message, state: FSMContext):
     await message.answer("Введите описание товара", reply_markup=remove_keyboard)
     await state.set_state(AddProduct.description)
 
-# Отлов некорректных вводов для состояния name
+# Хендлер Если Введен некорректный Тип данных для состояния name
 @admin_router.message(AddProduct.name) # Если Введен некорректный Тип данных
 async def add_incorrect_name(message: types.Message):
     await message.answer("Вы ввели недопустимый тип данных.\nВведите ТЕКСТ: Названия товара", reply_markup=remove_keyboard)
@@ -127,24 +126,23 @@ async def add_incorrect_name(message: types.Message):
 # Ловлю данные для состояние description и потом меняю состояние на price
 @admin_router.message(F.text, AddProduct.description)
 async def add_description(message: types.Message, state: FSMContext):
-    if message.text == ".":
+    if message.text == "-":
         await state.update_data(description=AddProduct.product_for_update.description)
     else:
         await state.update_data(description=message.text)
-        await message.answer("Введите стоимость товара", reply_markup=remove_keyboard)
+    await message.answer("Введите стоимость товара", reply_markup=remove_keyboard)
     await state.set_state(AddProduct.price)
 
-# Хендлер для отлова некорректных вводов для состояния description
+# Хендлер Если Введен некорректный Тип данных для состояния description
 @admin_router.message(AddProduct.description)  # Если Введен некорректный Тип данных
 async def add_incorrect_description(message: types.Message):
     await message.answer("Вы ввели недопустимый тип данных.\nВведите ТЕКСТ: Описание товара", reply_markup=remove_keyboard)
     await message.delete()
 
-
 # Ловим данные для состояние price и потом меняем состояние на image
 @admin_router.message(F.text, AddProduct.price)
 async def add_price(message: types.Message, state: FSMContext):
-    if message.text == ".":
+    if message.text == "-":
         await state.update_data(price=AddProduct.product_for_update.price)
     else:
         # Проверка на число
@@ -156,62 +154,35 @@ async def add_price(message: types.Message, state: FSMContext):
     await message.answer("Загрузите изображение товара", reply_markup=remove_keyboard)
     await state.set_state(AddProduct.image)
 
-# Хендлер для отлова ввода некорректных типов данных для состояния price
+# Хендлер Если Введен некорректный Тип данных для состояния price
 @admin_router.message(AddProduct.price) # Если Введен некорректный Тип данных
 async def add_incorrect_price(message: types.Message):
     await message.answer("Вы ввели недопустимый тип данных.\nВведите ТЕКСТ: Стоимость товара", reply_markup=remove_keyboard)
     await message.delete()
 
-
 # Ловим данные для состояние image и потом выходим из состояний
-@admin_router.message(or_f(F.photo, F.text == "."), AddProduct.image)
+@admin_router.message(or_f(F.photo, F.text == "-"), AddProduct.image)
 async def add_image(message: types.Message, state: FSMContext, session: AsyncSession):
-    await state.update_data(image=message.photo[-1].file_id)
-    data = await state.get_data()
-    try:
-        await queries.orm_add_product(session, data)
-        await message.answer("Товар добавлен", reply_markup=admin_keyboard)
-        # await message.answer(str(data))
-    except Exception as error:
-        await message.answer('Товар НЕ сохранен в Базе Данных | Ошибка Доступа.', reply_markup=admin_keyboard)
-    await state.clear()  # await state.set_state(StateFilter(None))
-
-@admin_router.message(AddProduct.image) # Если Введен некорректный Тип данных
-async def add_incorrect_image(message: types.Message):
-    await message.answer("Вы ввели недопустимый тип данных.\nОтправьте ФОТО: Изображение товара", reply_markup=remove_keyboard)
-    await message.delete()
-
-###################
-
-# Ловим данные для состояние image и потом выходим из состояний
-@admin_router.message(AddProduct.image, or_f(F.photo, F.text == "."))
-async def add_image(message: types.Message, state: FSMContext, session: AsyncSession):
-    if message.text and message.text == ".":
-        await state.update_data(image=AddProduct.product_for_change.image)
-
+    if message.text == "-":
+        await state.update_data(image=AddProduct.product_for_update.image)
     else:
         await state.update_data(image=message.photo[-1].file_id)
     data = await state.get_data()
     try:
-        if AddProduct.product_for_change:
-            await orm_update_product(session, AddProduct.product_for_change.id, data)
+        if AddProduct.product_for_update:
+            await queries.orm_update_product(session, data, AddProduct.product_for_update.id)
+            info = 'Изменен'
         else:
-            await orm_add_product(session, data)
-        await message.answer("Товар добавлен/изменен", reply_markup=ADMIN_KB)
-        await state.clear()
+            await queries.orm_add_product(session, data)
+            info = 'Добавлен'
+        await message.answer(f"Товар {info}", reply_markup=admin_keyboard)
+    except Exception:
+        await message.answer('Товар НЕ сохранен в Базе Данных | Ошибка Доступа.', reply_markup=admin_keyboard)
+    await state.clear() # очищаю состояние в любом случае. чтобы не было застревания в этом состоянии # await state.set_state(StateFilter(None))
+    AddProduct.product_for_update = None
 
-    except Exception as e:
-        await message.answer(
-            f"Ошибка: \n{str(e)}\nОбратись к программеру, он опять денег хочет",
-            reply_markup=ADMIN_KB,
-        )
-        await state.clear()
-
-    AddProduct.product_for_change = None
-
-
-@admin_router.message(AddProduct.image)
-async def add_image2(message: types.Message, state: FSMContext):
-    await message.answer("Отправьте фото пищи")
-
-###################
+# Хендлер Если Введен некорректный Тип данных для состояния image
+@admin_router.message(AddProduct.image) #
+async def add_incorrect_image(message: types.Message):
+    await message.answer("Вы ввели недопустимый тип данных.\nОтправьте ФОТО: Изображение товара", reply_markup=remove_keyboard)
+    await message.delete()

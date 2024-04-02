@@ -1,9 +1,10 @@
 from string import punctuation
 from aiogram import F, Router, types, Bot
 from aiogram.filters import Command, or_f
+import json
 
 from filters.chat_types import ChatTypeFilter
-from common import restricted_words
+from common.banned_words import restricted_words
 
 user_group_router = Router()
 user_group_router.message.filter(ChatTypeFilter(['group', 'supergroup'])) # разделяю где будут работать роутер и его хендлеры
@@ -26,13 +27,19 @@ async def get_admins(message: types.Message, bot: Bot):
 @user_group_router.edited_message()
 @user_group_router.message()
 async def cleaner_restricted_words(message: types.Message):
-    cleaned_text = remove_punctuation(message.text.lower())
-    if restricted_words.intersection(cleaned_text.split()):
-        await message.reply(f'{message.from_user.first_name}, - Ругаться в группе запрещено! Будьте корректны в общении с коллегами')
+    # cleaned_text = remove_punctuation(message.text.lower())
+    # if restricted_words.intersection(cleaned_text.split()):
+    #     await message.reply(f'{message.from_user.first_name}, - Ругаться в группе запрещено! Будьте корректны в общении с коллегами')
+    #     await message.delete()
+    #     # await message.chat.ban(message.from_user.id)
+
+    path_file_cenz = r'./common/cenz.json'
+    cenzored_words = set(json.load(open(path_file_cenz)))
+    message_words = remove_punctuation(message.text.lower()).split()
+    if cenzored_words.intersection(message_words):
+        await message.reply(f'{message.from_user.first_name}, Ругаться в группе запрещено! Будьте корректны в общении с коллегами')
         await message.delete()
         # await message.chat.ban(message.from_user.id)
-    # # Узнать ID чата.
-    # chat_id = message.chat.id  # работает и для приватного(лс) чата и для общих чатов (групп)
-    # # print(chat_id)
-    # await message.answer('Следуйте Указаниям!') # chat_id=chat_id, text=
+
+
 
