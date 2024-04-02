@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from filters.chat_types import ChatTypeFilter, IsAdmin
 from keyboards.reply_buttons import get_keyboard
 from middlewares.db import CounterMiddleware
-from database.models import Product
 import database.orm_queries as queries
 
 admin_router = Router()
@@ -17,9 +16,9 @@ admin_router.message.filter(ChatTypeFilter(["private"]), IsAdmin())
 
 
 admin_keyboard = get_keyboard(
-    buttons=["Добавить Товар", "Изменить Товар", "Удалить Товар", "Просмотреть Товары"],
+    buttons=["Добавить Товар", "Ассортимент"],
     placeholder="Выберите действие:",
-    sizes=(2, 1, 1) )
+    sizes=(2,) )
 
 remove_keyboard = get_keyboard(buttons=['Назад', 'Отмена'], placeholder="Выберите действие:")
 
@@ -27,18 +26,22 @@ remove_keyboard = get_keyboard(buttons=['Назад', 'Отмена'], placehold
 async def add_product(message: types.Message):
     await message.answer("Что хотите сделать?", reply_markup=admin_keyboard)
 
-@admin_router.message(F.text.casefold() == 'просмотреть товары')
-async def starring_at_product(message: types.Message):
-    await message.answer("Вот список товаров:")
+@admin_router.message(F.text.casefold() == 'ассортимент')
+async def starring_at_product(message: types.Message, session: AsyncSession):
+    await message.answer("Список товаров:")
+    for product in await queries.orm_get_all_products(session):
+        await message.answer_photo(product.image,
+            caption=f"<b>{product.name}</b>\n{product.description}\nЦена: {round(product.price, 2)}")
 
-@admin_router.message(F.text.casefold() == "изменить товар")
-async def change_product(message: types.Message):
-    await message.answer("Вот список товаров:")
 
-@admin_router.message(F.text.lower() == "удалить товар")
-async def delete_product(message: types.Message, counter):
-    print(counter)
-    await message.answer("Выберите товар(ы) для удаления")
+# @admin_router.message(F.text.casefold() == "изменить товар")
+# async def change_product(message: types.Message):
+#     await message.answer("Вот список товаров:")
+#
+# @admin_router.message(F.text.lower() == "удалить товар")
+# async def delete_product(message: types.Message, counter):
+#     print(counter)
+#     await message.answer("Выберите товар(ы) для удаления")
 
 # Код ниже для машины состояний (FSM)
 
@@ -127,8 +130,6 @@ async def add_image(message: types.Message, state: FSMContext, session: AsyncSes
     except Exception as error:
         await message.answer('Товар НЕ сохранен в Базе Данных | Ошибка Доступа.', reply_markup=admin_keyboard)
     await state.clear()  # await state.set_state(StateFilter(None))
-
-
 
 @admin_router.message(AddProduct.image) # Если Введен некорректный Тип данных
 async def add_image(message: types.Message):

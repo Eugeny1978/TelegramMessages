@@ -2,9 +2,11 @@ from aiogram import F, Router, types
 from aiogram.filters import CommandStart, Command, or_f
 from aiogram.utils.formatting import as_list, as_section, as_marked_section, Bold
 
+from sqlalchemy.ext.asyncio import AsyncSession
 from filters.chat_types import ChatTypeFilter
 from keyboards import reply_buttons_video5 as rbs
 from keyboards import reply_buttons as rb
+import database.orm_queries as queries
 
 user_private_router = Router()
 user_private_router.message.filter(ChatTypeFilter(['private']))  # разделяю где будут работать роутер и его хендлеры
@@ -24,8 +26,11 @@ async def start_cmd(message: types.Message):
 # Несколько разнотипных условий повесил на один обработчик
 # @user_private_router.message(Command('menu'))
 @user_private_router.message(or_f(Command('menu'), F.text.lower().contains('меню'), F.text.lower().contains('menu')))
-async def trades_cmd(message: types.Message):
+async def trades_cmd(message: types.Message, session: AsyncSession):
     await message.answer('MENU:', reply_markup=rbs.delete_keyboard)
+    for product in await queries.orm_get_all_products(session):
+        await message.answer_photo(product.image,
+            caption=f"<b>{product.name}</b>\n{product.description}\nЦена: {round(product.price, 2)}")
 
 # @user_private_router.message(Command('about'))
 @user_private_router.message(or_f(Command('about'), F.text.lower().contains('о нас'), F.text.lower().contains('about')))
