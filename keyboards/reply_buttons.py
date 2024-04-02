@@ -3,7 +3,7 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 def get_keyboard(
         buttons: list[str],
-        placeholder: str = 'Введите сообщение:',
+        placeholder: str = 'Выберите действие:',
         request_contact: int = 0,
         request_location: int = 0,
         sizes: tuple[int] = (0, ) ):

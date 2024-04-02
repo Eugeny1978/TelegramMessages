@@ -27,7 +27,8 @@ from middlewares.db import DataBaseSession
 
 # Ограничил виды обновлений которые будет бот отслеживать | https://core.telegram.org/bots/api#getting-updates
 # 'channel_post', 'edited_channel_post', 'message_reaction', 'shipping_query', 'chosen_inline_result' и другие
-ALLOWED_UPDATES = ['message', 'edited message']
+# ALLOWED_UPDATES = ['message', 'edited message', 'callback_query'] # явно прописать те обновления которые нужно отслеживать
+# В коде сделал по другому: с помощью метода отслеживающего кикие есть у меня типы изменений
 
 # bot = Bot(token=get_token())
 # форматирование сообщений с помощью HTML тегов, также мсожно вставлять в каждый хендлер, но проще прописать тут
@@ -73,7 +74,8 @@ async def main():
     await bot.set_my_commands(commands=private_commands, scope=types.BotCommandScopeAllPrivateChats())
 
     # Запускает Процесс (бесконечный цикл) проверки обновлений событий
-    await dp.start_polling(bot, allowed_updates=ALLOWED_UPDATES)
+    # await dp.start_polling(bot, allowed_updates=ALLOWED_UPDATES)
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types()) # см строку выше
 
 if __name__ == '__main__':
     asyncio.run(main())
