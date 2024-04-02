@@ -15,8 +15,8 @@ admin_router = Router()
 admin_router.message.middleware(CounterMiddleware())
 admin_router.message.filter(ChatTypeFilter(["private"]), IsAdmin())
 
-admin_keyboard = get_keyboard(buttons=["Добавить Товар", "Ассортимент"])
-remove_keyboard = get_keyboard(buttons=['Назад', 'Отмена'])
+admin_keyboard = get_keyboard(buttons=["❇️ Добавить Товар", "🍕 Ассортимент"])
+remove_keyboard = get_keyboard(buttons=['◀️ Назад', '🟥 Отмена']) #  https://www.emojiall.com/ru/categories/I
 
 class AddProduct(StatesGroup):
     name = State()
@@ -34,15 +34,15 @@ class AddProduct(StatesGroup):
 
 @admin_router.message(Command("admin"))
 async def add_product(message: types.Message):
-    await message.answer("Что хотите сделать?", reply_markup=admin_keyboard)
+    await message.answer("Используйте Кнопки Клавиатуры:\n| Добавить Товар | Ассортимент |", reply_markup=admin_keyboard)
 
-@admin_router.message(F.text.casefold() == 'ассортимент')
-async def starring_at_product(message: types.Message, session: AsyncSession):
+@admin_router.message(F.text.casefold().contains('ассортимент'))
+async def get_assortment_products(message: types.Message, session: AsyncSession):
     await message.answer("Список товаров:")
     for product in await queries.orm_get_all_products(session):
         await message.answer_photo(
             product.image,
-            caption=f"<b>{product.name}</b>\n{product.description}\nЦена: {round(product.price, 2)}",
+            caption=f"<b>{product.name}</b>\n{product.description}\nЦена: <b>{round(product.price, 2)}</b> руб.",
             reply_markup=get_inline_buttons(buttons={'Изменить': f'update_{product.id}', 'Удалить': f'delete_{product.id}'})
         )
 
@@ -53,41 +53,31 @@ async def delete_product(callback: types.CallbackQuery, session: AsyncSession):
     await callback.answer('Товар Удален', show_alert=True)
     await callback.message.answer('Товар Удален!')
 
-@admin_router.callback_query(F.data.startswith('update_'))
-async def delete_product(callback: types.CallbackQuery, session: AsyncSession, state: FSMContext):
+
+# # Код для машины состояний (FSM) -------------------------------------------------------------------------------------
+
+# Изменение Товара - Становимся в состояние ожидания ввода name
+@admin_router.callback_query(F.data.startswith('update_'), StateFilter(None))
+async def update_product(callback: types.CallbackQuery, session: AsyncSession, state: FSMContext):
     product_id = int(callback.data.split('_')[-1])
     # product_id = int(callback.data.replace('update_', ''))
     product_for_update = await queries.orm_get_product(session, product_id)
     AddProduct.product_for_update = product_for_update
-    callback.answer() # тк ожидает ответа
+    print(AddProduct.product_for_update)
+    await callback.answer() # отправляю ответ - тк нажатие на кнопку ожидает ответа
     await callback.message.answer('Введите Название Товара', reply_markup=ReplyKeyboardRemove())
     await state.set_state(AddProduct.name)
 
-    # data = {}
-    # await queries.orm_update_product(session, data, product_id)
-    # await callback.answer('Товар Изменен', show_alert=True)
-    # await callback.message.answer('Товар Изменен!')
-
-
-# @admin_router.message(F.text.casefold() == "изменить товар")
-# async def change_product(message: types.Message):
-#     await message.answer("Вот список товаров:")
-#
-# @admin_router.message(F.text.lower() == "удалить товар")
-# async def delete_product(message: types.Message, counter):
-#     print(counter)
-#     await message.answer("Выберите товар(ы) для удаления")
-
-# Код ниже для машины состояний (FSM)
-
-
-@admin_router.message(F.text == "Добавить Товар", StateFilter(None))
+ # Добавлние Товара - Становимся в состояние ожидания ввода name
+@admin_router.message(F.text.casefold().contains('добавить товар'), StateFilter(None))
 async def add_product(message: types.Message, state: FSMContext):
     await message.answer("Введите название товара", reply_markup=remove_keyboard) # types.ReplyKeyboardRemove()
     await state.set_state(AddProduct.name)
 
+# Хендлер отмены и сброса состояния должен быть всегда именно хдесь,
+# после того как только встали в состояние номер 1 (очередность фильтров)
 @admin_router.message(Command("cancel"), StateFilter('*'))
-@admin_router.message(F.text.casefold() == "отмена", StateFilter('*'))
+@admin_router.message(F.text.casefold().contains("отмена"), StateFilter('*'))
 async def cancel_handler(message: types.Message, state: FSMContext) -> None:
     current_state = await state.get_state()
     if not current_state: return
@@ -95,7 +85,7 @@ async def cancel_handler(message: types.Message, state: FSMContext) -> None:
     await message.answer("Действия отменены", reply_markup=admin_keyboard)
 
 @admin_router.message(Command("back"))
-@admin_router.message(F.text.casefold() == "назад")
+@admin_router.message(F.text.casefold().contains("назад"))
 async def cancel_handler(message: types.Message, state: FSMContext) -> None:
     current_state = await state.get_state()
     if current_state == AddProduct.name:
@@ -110,7 +100,7 @@ async def cancel_handler(message: types.Message, state: FSMContext) -> None:
             return
         prev_state = step_state
 
-@admin_router.message(or_f(F.text, F.text == '.'), AddProduct.name)
+@admin_router.message(F.text, AddProduct.name) # or_f(F.text, F.text == '.')
 async def add_name(message: types.Message, state: FSMContext):
     if message.text == '.':
         await state.update_data(name=AddProduct.product_for_update.name)
