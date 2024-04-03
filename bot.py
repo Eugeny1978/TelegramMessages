@@ -16,7 +16,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from datetime import datetime
-from config import TOKEN, private_commands
+# from time import sleep
+from config import TOKEN, private_commands, CHAT_ID_GROUP
 from handlers.admin_private import admin_router
 from handlers.user_private import user_private_router
 from handlers.user_group import user_group_router
@@ -30,7 +31,7 @@ from middlewares.db import DataBaseSession
 # ALLOWED_UPDATES = ['message', 'edited message', 'callback_query'] # явно прописать те обновления которые нужно отслеживать
 # В коде сделал по другому: с помощью метода отслеживающего кикие есть у меня типы изменений
 
-# bot = Bot(token=get_token())
+
 # форматирование сообщений с помощью HTML тегов, также мсожно вставлять в каждый хендлер, но проще прописать тут
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML)) # ParseMode.MARKDOWN_V2
 bot.my_admins_list = []
@@ -42,9 +43,7 @@ dp.include_router(user_private_router)
 dp.include_router(user_group_router)
 dp.include_router(admin_router)
 
-# chat_id = '-4102589186'
-# async def send_message(message: types.Message):
-#     await bot.send_message(chat_id=chat_id, text=message)
+date_format = '%Y-%m-%d %H:%M:%S'
 
 async def on_startup(bot):
     drop_case = False
@@ -55,7 +54,11 @@ async def on_startup(bot):
 async def on_shutdown(bot):
     print(f'Бот отключился. | {datetime.now().strftime(date_format)}')
 
-date_format = '%Y-%m-%d %H:%M:%S'
+
+
+
+
+
 
 async def main():
     print(f'Бот начал работу. | {datetime.now().strftime(date_format)}')
@@ -73,9 +76,16 @@ async def main():
     # await bot.delete_my_commands(scope=types.BotCommandScopeAllPrivateChats())
     await bot.set_my_commands(commands=private_commands, scope=types.BotCommandScopeAllPrivateChats())
 
+    # Отправка Сообщений по внешнему событию
+    # await send_message_to_chat_by_event()
+
     # Запускает Процесс (бесконечный цикл) проверки обновлений событий
     # await dp.start_polling(bot, allowed_updates=ALLOWED_UPDATES)
     await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types()) # см строку выше
+
+
+
+
 
 if __name__ == '__main__':
     asyncio.run(main())

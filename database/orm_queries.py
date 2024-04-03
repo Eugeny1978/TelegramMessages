@@ -10,7 +10,7 @@ async def orm_add_product(session: AsyncSession, data: dict):
     await session.commit()  # сохранение данных
 
 async def orm_get_all_products(session: AsyncSession):
-    query = select(Products)
+    query = select(Products).order_by(Products.id)
     result = await session.execute(query)
     return result.scalars().all()
 
@@ -27,15 +27,6 @@ async def orm_update_product(session: AsyncSession, data: dict, product_id: int)
         image=data['image'])
     await session.execute(query)
     await session.commit()
-
-# async def orm_update_product(session: AsyncSession, product_id: int, data):
-#     query = update(Product).where(Product.id == product_id).values(
-#         name=data["name"],
-#         description=data["description"],
-#         price=float(data["price"]),
-#         image=data["image"],)
-#     await session.execute(query)
-#     await session.commit()
 
 async  def orm_delete_product(session: AsyncSession, product_id: int):
     query = delete(Products).where(Products.id == product_id)

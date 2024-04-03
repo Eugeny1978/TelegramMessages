@@ -1,5 +1,5 @@
 from aiogram import F, Router, types
-from aiogram.filters import CommandStart, Command, or_f
+from aiogram.filters import CommandStart, Command, or_f, StateFilter
 from aiogram.utils.formatting import as_list, as_section, as_marked_section, Bold
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,8 +11,7 @@ import database.orm_queries as queries
 user_private_router = Router()
 user_private_router.message.filter(ChatTypeFilter(['private']))  # разделяю где будут работать роутер и его хендлеры
 
-
-@user_private_router.message(CommandStart())
+@user_private_router.message(CommandStart(), StateFilter(None))
 async def start_cmd(message: types.Message):
     # await message.answer('Привет, я виртуальный помошник!', reply_markup=rbs.start_keyboard)
     # await message.answer('Привет, я виртуальный помошник!', reply_markup=rbs.start_keyboard_3)
@@ -22,7 +21,7 @@ async def start_cmd(message: types.Message):
                  placeholder="Что вас интересует?",
                  request_contact=4,  # индекс кнопки. начинается с 1
                  sizes=(2, 2) ) )
-
+    # await message.answer(f"CHAT ID: {message.chat.id}") # id чата
 # Несколько разнотипных условий повесил на один обработчик
 # @user_private_router.message(Command('menu'))
 @user_private_router.message(or_f(Command('menu'), F.text.lower().contains('меню'), F.text.lower().contains('menu')))
@@ -46,7 +45,7 @@ async def payment_cmd(message: types.Message):
             'При получении Картой',
             'При получении Наличными',
             'В Пиццерии',
-        marker='* '
+        marker='✅ '
     )
     await message.answer(answer.as_html(), reply_markup=rbs.payment_keyboard)
 
@@ -58,13 +57,13 @@ async def shipping_cmd(message: types.Message):
         'Курьером',
         'Самовывоз',
         'Поем у вас в пиццерии',
-        marker='> '
+        marker='✔️ '
     )
     is_no = as_marked_section(
         Bold('Невозможно:'),
         'Почтой',
         'Голубями',
-        marker='x '
+        marker='❌ '
     )
     div_line = '\n' + '-' * 60 + '\n'
     answer = as_list(is_yes, is_no, sep=div_line)
@@ -83,6 +82,8 @@ async def get_contact(message: types.Message):
 async def get_contact(message: types.Message):
     await message.answer('Locatiom GETs')
     await message.answer(str(message.location))
+
+
 
 # @user_private_router.message(F.text.lower() == 'варианты доставки')
 # async def magic_v1(message: types.Message):

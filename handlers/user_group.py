@@ -1,10 +1,10 @@
 from string import punctuation
 from aiogram import F, Router, types, Bot
-from aiogram.filters import Command, or_f
+from aiogram.filters import CommandStart, Command, or_f, StateFilter
 import json
 
 from filters.chat_types import ChatTypeFilter
-from common.banned_words import restricted_words
+# from common.banned_words import restricted_words
 
 user_group_router = Router()
 user_group_router.message.filter(ChatTypeFilter(['group', 'supergroup'])) # разделяю где будут работать роутер и его хендлеры
@@ -12,6 +12,11 @@ user_group_router.message.filter(ChatTypeFilter(['group', 'supergroup'])) # ра
 
 def remove_punctuation(text: str):
     return text.translate(str.maketrans('', '', punctuation))
+
+@user_group_router.message(CommandStart(), StateFilter(None))
+async def start_cmd(message: types.Message):
+    await message.answer('Привет, я виртуальный помошник!')
+    # await message.answer(f'CHAT ID: {message.chat.id}') # id чата
 
 @user_group_router.message(Command('admin'))
 async def get_admins(message: types.Message, bot: Bot):
@@ -40,6 +45,9 @@ async def cleaner_restricted_words(message: types.Message):
         await message.reply(f'{message.from_user.first_name}, Ругаться в группе запрещено! Будьте корректны в общении с коллегами')
         await message.delete()
         # await message.chat.ban(message.from_user.id)
+
+
+
 
 
 

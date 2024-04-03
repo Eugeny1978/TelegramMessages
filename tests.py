@@ -28,4 +28,15 @@
 #     print(get_token())
 
 
+from datetime import datetime
+def get_event():
+    dt_format = ('%M')
+    minutes = int(datetime.now().strftime(dt_format))
+    event = True if not minutes % 2 else False
+    signal = 'Покупайте' if int(str(minutes)[-1]) > 4 else 'Продавайте'
+    return event, signal
 
+# print(get_event())
+
+minutes = 456
+print(int(str(minutes)[-1]))
